@@ -1,0 +1,16 @@
+# See https://atom.io/docs/latest/creating-a-package#menus for more details
+'context-menu':
+  '.overlayer':
+      'Enable open-sesame': 'open-sesame:toggle'
+
+'menu': [
+  {
+    'label': 'Packages'
+    'submenu': [
+      'label': 'open-sesame'
+      'submenu': [
+        { 'label': 'Toggle', 'command': 'open-sesame:toggle' }
+      ]
+    ]
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "name": "open-sesame",
+  "main": "./lib/open-sesame",
+  "version": "0.0.0",
+  "description": "Open files in Atom with ease",
+  "repository": "https://github.com/stevenhauser/open-sesame",
+  "license": "MIT",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "dependencies": {
+  }
+}
