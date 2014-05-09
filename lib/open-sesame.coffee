@@ -1,4 +1,4 @@
-PATH_REGEX = /^([\/A-Z\.\d-_]+)$/i
+PATH_REGEX = /[\/A-Z\.\d-_]+/i
 OPEN_COMMAND = 'open-sesame:open-file-under-cursor'
 
 getPathUnderCursor = ->
