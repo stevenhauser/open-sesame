@@ -1,13 +1,15 @@
-OpenSesameView = require './open-sesame-view'
+WORD_REGEX = /[\/A-Z\.\d-_]+/i
+OPEN_COMMAND = 'open-sesame:open-file-under-cursor'
+
+getPathUnderCursor = ->
+  atom.workspace.getActiveEditor()?.getWordUnderCursor
+    wordRegex: WORD_REGEX
+
+openFileUnderCursor = ->
+  path = getPathUnderCursor()
+  atom.workspaceView.open(path) if path
 
 module.exports =
-  openSesameView: null
 
   activate: (state) ->
-    @openSesameView = new OpenSesameView(state.openSesameViewState)
-
-  deactivate: ->
-    @openSesameView.destroy()
-
-  serialize: ->
-    openSesameViewState: @openSesameView.serialize()
+    atom.workspaceView.command OPEN_COMMAND, openFileUnderCursor
