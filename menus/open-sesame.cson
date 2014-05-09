@@ -1,15 +1,12 @@
 # See https://atom.io/docs/latest/creating-a-package#menus for more details
-'context-menu':
-  '.overlayer':
-      'Enable open-sesame': 'open-sesame:toggle'
 
 'menu': [
   {
     'label': 'Packages'
     'submenu': [
-      'label': 'open-sesame'
+      'label': 'Open Sesame'
       'submenu': [
-        { 'label': 'Toggle', 'command': 'open-sesame:toggle' }
+        { 'label': 'Open file under cursor', 'command': 'open-sesame:open-file-under-cursor' }
       ]
     ]
   }
