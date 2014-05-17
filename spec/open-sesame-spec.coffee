@@ -8,8 +8,8 @@ OpenSesame = require '../lib/open-sesame'
 
 describe 'OpenSesame', ->
 
-  stubActiveView = ->
-    atom.workspaceView.openSync('sample-stub.js')
+  stubActiveView = (path = 'sample-stub.js') ->
+    atom.workspace.openSync(path)
     atom.workspaceView.getActiveView()
 
   triggerOpenFile = ->
@@ -80,10 +80,28 @@ describe 'OpenSesame', ->
         spyOn(atom.workspaceView, 'getActiveView').andReturn(activeViewStub)
         spyOn(activeViewStub, 'scrollToBufferPosition')
 
-      it 'opens the file at that path', ->
-        activeEditorStub.getWordUnderCursor.andReturn('a-valid-path')
-        triggerOpenFile()
-        expect(atom.workspaceView.open).toHaveBeenCalledWith('a-valid-path')
+      describe 'when the path is absolute', ->
+
+        it 'opens the file at that path', ->
+          activeEditorStub.getWordUnderCursor.andReturn('/an/absolute/valid-path')
+          triggerOpenFile()
+          expect(atom.workspaceView.open).toHaveBeenCalledWith('/an/absolute/valid-path')
+
+      describe 'when the path is relative as a sibling', ->
+
+        it 'opens the file at that path', ->
+          spyOn(activeEditorStub, 'getPath').andReturn('some/path/file.js')
+          activeEditorStub.getWordUnderCursor.andReturn('a/relative/valid-path')
+          triggerOpenFile()
+          expect(atom.workspaceView.open).toHaveBeenCalledWith('some/path/a/relative/valid-path')
+
+      describe 'when the path is relative as an ancestor', ->
+
+        it 'opens the file at that path', ->
+          spyOn(activeEditorStub, 'getPath').andReturn('some/very/deep/path/file.js')
+          activeEditorStub.getWordUnderCursor.andReturn('../../some-parent/valid-path')
+          triggerOpenFile()
+          expect(atom.workspaceView.open).toHaveBeenCalledWith('some/very/some-parent/valid-path')
 
       describe 'when there is a line number on the path', ->
 
