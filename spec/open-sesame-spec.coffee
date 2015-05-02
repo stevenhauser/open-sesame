@@ -1,4 +1,3 @@
-{Workspace, WorkspaceView} = require 'atom'
 OpenSesame = require '../lib/open-sesame'
 
 # Use the command `window:run-package-specs` (cmd-alt-ctrl-p) to run specs.
@@ -8,17 +7,18 @@ OpenSesame = require '../lib/open-sesame'
 
 describe 'OpenSesame', ->
 
-  stubActiveView = (path = 'sample-stub.js') ->
+  stubActiveEditor = (path = 'sample-stub.js') ->
     atom.workspace.openSync(path)
-    atom.workspaceView.getActiveView()
+    atom.workspace.getActiveTextEditor()
 
   triggerOpenFile = ->
-    atom.workspaceView.getActiveView().trigger('open-sesame:open-file-under-cursor')
+    atom.commands.dispatch(
+      atom.views.getView(atom.workspace.getActiveTextEditor()),
+      'open-sesame:open-file-under-cursor'
+    )
 
   beforeEach ->
-    atom.workspace = new Workspace
-    atom.workspaceView = new WorkspaceView
-    spyOn(atom.workspaceView, 'open').andReturn
+    spyOn(atom.workspace, 'open').andReturn
       done: (cb) -> cb()
     waitsForPromise ->
       atom.packages.activatePackage('open-sesame')
@@ -58,16 +58,14 @@ describe 'OpenSesame', ->
 
   describe 'when there is an active editor', ->
 
-    activeViewStub = null
     activeEditorStub = null
 
     beforeEach ->
-      activeViewStub = stubActiveView()
-      activeEditorStub = activeViewStub.editor
+      activeEditorStub = stubActiveEditor()
       spyOn(activeEditorStub, 'getWordUnderCursor')
       spyOn(activeEditorStub, 'setCursorBufferPosition')
       spyOn(activeEditorStub, 'moveCursorToFirstCharacterOfLine')
-      spyOn(atom.workspace, 'getActiveEditor').andReturn(activeEditorStub)
+      spyOn(atom.workspace, 'getActiveTextEditor').andReturn(activeEditorStub)
 
     it 'gets the current word under the cursor with a custom regex', ->
       triggerOpenFile()
@@ -77,15 +75,14 @@ describe 'OpenSesame', ->
     describe 'when there is a valid path under the cursor', ->
 
       beforeEach ->
-        spyOn(atom.workspaceView, 'getActiveView').andReturn(activeViewStub)
-        spyOn(activeViewStub, 'scrollToBufferPosition')
+        spyOn(activeEditorStub, 'scrollToBufferPosition')
 
       describe 'when the path is absolute', ->
 
         it 'opens the file at that path', ->
           activeEditorStub.getWordUnderCursor.andReturn('/an/absolute/valid-path')
           triggerOpenFile()
-          expect(atom.workspaceView.open).toHaveBeenCalledWith('/an/absolute/valid-path')
+          expect(atom.workspace.open).toHaveBeenCalledWith('/an/absolute/valid-path')
 
       describe 'when the path is relative as a sibling', ->
 
@@ -93,7 +90,7 @@ describe 'OpenSesame', ->
           spyOn(activeEditorStub, 'getPath').andReturn('some/path/file.js')
           activeEditorStub.getWordUnderCursor.andReturn('a/relative/valid-path')
           triggerOpenFile()
-          expect(atom.workspaceView.open).toHaveBeenCalledWith('some/path/a/relative/valid-path')
+          expect(atom.workspace.open).toHaveBeenCalledWith('some/path/a/relative/valid-path')
 
       describe 'when the path is relative as an ancestor', ->
 
@@ -101,21 +98,21 @@ describe 'OpenSesame', ->
           spyOn(activeEditorStub, 'getPath').andReturn('some/very/deep/path/file.js')
           activeEditorStub.getWordUnderCursor.andReturn('../../some-parent/valid-path')
           triggerOpenFile()
-          expect(atom.workspaceView.open).toHaveBeenCalledWith('some/very/some-parent/valid-path')
+          expect(atom.workspace.open).toHaveBeenCalledWith('some/very/some-parent/valid-path')
 
       describe 'when there is a line number on the path', ->
 
         it 'tries to scroll to the line', ->
           activeEditorStub.getWordUnderCursor.andReturn('a-valid-path:54')
           triggerOpenFile()
-          expect(activeViewStub.scrollToBufferPosition).toHaveBeenCalled()
+          expect(activeEditorStub.scrollToBufferPosition).toHaveBeenCalled()
 
       describe 'when there is not a line number on the path', ->
 
         it 'does not try to scroll the the line', ->
           activeEditorStub.getWordUnderCursor.andReturn('a-valid-path')
           triggerOpenFile()
-          expect(activeViewStub.scrollToBufferPosition).not.toHaveBeenCalled()
+          expect(activeEditorStub.scrollToBufferPosition).not.toHaveBeenCalled()
 
     describe 'when there is an invalid path under the cursor', ->
 
@@ -126,12 +123,12 @@ describe 'OpenSesame', ->
         triggerOpenFile()
         activeEditorStub.getWordUnderCursor.andReturn(false)
         triggerOpenFile()
-        expect(atom.workspaceView.open).not.toHaveBeenCalled()
+        expect(atom.workspace.open).not.toHaveBeenCalled()
 
   describe 'when there is not an active editor', ->
 
     beforeEach ->
-      stubActiveView()
+      stubActiveEditor()
       spyOn(atom.workspace, 'getActiveEditor').andReturn(null)
 
     it 'does not choke like an idiot', ->
@@ -139,4 +136,4 @@ describe 'OpenSesame', ->
 
     it 'does not open the path', ->
       triggerOpenFile()
-      expect(atom.workspaceView.open).not.toHaveBeenCalled()
+      expect(atom.workspace.open).not.toHaveBeenCalled()
