@@ -1,10 +1,11 @@
 {Point} = require('atom')
 
-PATH_REGEX = /[\/A-Z\.\d-_]+(:\d+)?/i
-OPEN_COMMAND = 'open-sesame:open-file-under-cursor'
+PATH_REGEX          = /[\/A-Z\.\d-_]+(:\d+)?/i
+LEADING_SLASH_REGEX = /^\//
+OPEN_COMMAND        = 'open-sesame:open-file-under-cursor'
 
 getPathUnderCursor = ->
-  atom.workspace.getActiveEditor()?.getWordUnderCursor
+  atom.workspace.getActiveTextEditor()?.getWordUnderCursor
     wordRegex: PATH_REGEX
 
 isAbsolutePath = (path) ->
@@ -13,14 +14,13 @@ isAbsolutePath = (path) ->
 getCurrentProjPath = ->
   # not a fan of the trailing `.` syntax, but CS complains
   # about leading `.` :( :( :(
-  curPath = (atom.workspaceView.
-    getActiveView()?.
-    editor?.
+  curPath = (atom.workspace.
+    getActiveTextEditor()?.
     getPath() or '').
     # Remove the project base path
-    replace(atom.project?.getPath() or '', '').
+    replace(atom.project?.getPaths()[0] or '', '').
     # Remove any leading slash
-    replace(/^\//, '').
+    replace(LEADING_SLASH_REGEX, '').
     split('/')
   curPath.pop() # remove file
   curPath.join('/')
@@ -38,13 +38,13 @@ constructPath = (path) ->
   # Remove nested directories considered parents
   curProjPathParts.pop() while --numParents > -1
   curProjPathParts.push(path)
-  curProjPathParts.join('/')
+  curProjPathParts.join('/').replace(LEADING_SLASH_REGEX, '')
 
 openFileUnderCursor = ->
   fullPath = getPathUnderCursor()
   return unless fullPath
   [path, lineNumber] = breakPathApart(fullPath)
-  promise = atom.workspaceView.open(constructPath(path))
+  promise = atom.workspace.open(constructPath(path))
   promise.done(-> moveToLine(lineNumber))
 
 # Breaks a `fullPath` apart and returns the main `path`
@@ -55,16 +55,16 @@ breakPathApart = (fullPath) ->
 
 # Lifted from fuzzy finder view. Thanks.
 moveToLine = (lineNumber) ->
-  editorView = atom.workspaceView.getActiveView()
-  return unless (editorView and !isNaN(lineNumber))
+  editor = atom.workspace.getActiveTextEditor()
+  return unless (editor and !isNaN(lineNumber))
   position = new Point(lineNumber - 1)
-  editorView.scrollToBufferPosition(position, center: true)
-  editorView.editor.setCursorBufferPosition(position)
-  editorView.editor.moveCursorToFirstCharacterOfLine()
+  editor.scrollToBufferPosition(position, center: true)
+  editor.setCursorBufferPosition(position)
+  editor.moveCursorToFirstCharacterOfLine()
 
 module.exports =
 
   PATH_REGEX: PATH_REGEX
 
   activate: (state) ->
-    atom.workspaceView.command OPEN_COMMAND, openFileUnderCursor
+    atom.commands.add 'atom-text-editor', OPEN_COMMAND, openFileUnderCursor
