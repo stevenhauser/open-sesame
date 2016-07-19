@@ -5,7 +5,8 @@ LEADING_SLASH_REGEX = /^\//
 OPEN_COMMAND        = 'open-sesame:open-file-under-cursor'
 
 getPathUnderCursor = ->
-  atom.workspace.getActiveTextEditor()?.getWordUnderCursor
+  editor = atom.workspace.getActivePaneItem()
+  editor?.getSelectedText() or editor?.getWordUnderCursor
     wordRegex: PATH_REGEX
 
 isAbsolutePath = (path) ->
